@@ -4721,6 +4721,11 @@ components:
           type: string
           format: date-time
           title: Created At
+        token:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Token
       type: object
       required:
       - id
@@ -4759,6 +4764,10 @@ components:
           maxItems: 200
           minItems: 1
           title: Candidates
+        deliver_email:
+          type: boolean
+          title: Deliver Email
+          default: true
       type: object
       required:
       - candidates

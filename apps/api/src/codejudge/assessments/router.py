@@ -87,7 +87,9 @@ async def invite(
     container: ContainerDep,
 ) -> InviteResult:
     a = await service.get(session, assessment_id)
-    return await service.invite(container, session, a, body.candidates, actor)
+    return await service.invite(
+        container, session, a, body.candidates, actor, deliver_email=body.deliver_email
+    )
 
 
 @router.post(

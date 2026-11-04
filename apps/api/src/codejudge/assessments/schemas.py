@@ -80,6 +80,9 @@ class InviteIn(ApiModel):
 
 class InviteRequest(ApiModel):
     candidates: list[InviteIn] = Field(min_length=1, max_length=200)
+    # babblebots fork: False = send no email and hand the raw token back instead, for a caller
+    # that delivers the link itself (a candidate already signed in to a live interview).
+    deliver_email: bool = True
 
 
 class InvitationOut(ApiModel):
@@ -95,6 +98,9 @@ class InvitationOut(ApiModel):
     score: float | None = None
     signals: int = 0
     created_at: datetime
+    # babblebots fork: the raw candidate token, only on an invite made with deliver_email=False.
+    # Only its hash is stored, so every other response has nothing to put here.
+    token: str | None = None
 
 
 class InviteResult(ApiModel):

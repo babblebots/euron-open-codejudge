@@ -355,7 +355,12 @@ def _esc(text: str) -> str:
 
 
 async def invite(
-    container: Container, session: AsyncSession, a: Assessment, people: list[InviteIn], actor: Actor
+    container: Container,
+    session: AsyncSession,
+    a: Assessment,
+    people: list[InviteIn],
+    actor: Actor,
+    deliver_email: bool = True,
 ) -> InviteResult:
     created: list[tuple[Invitation, str]] = []
     for person in people:
@@ -372,6 +377,13 @@ async def invite(
         created.append((inv, token))
     audit(session, actor, "assessment.invited", "assessment", a.id, count=len(created))
     await session.commit()
+    if not deliver_email:
+        # babblebots fork: the caller delivers the link, so it gets the raw token once, here.
+        outs = []
+        for inv, token in created:
+            await session.refresh(inv)
+            outs.append(_invitation_out(inv).model_copy(update={"token": token}))
+        return InviteResult(invitations=outs)
     failed: list[str] = []
     for inv, token in created:
         if await _send(container, a, inv, token):
