@@ -190,10 +190,12 @@ async def publish_all(admin: Client, problems: dict[str, dict[str, Any]]) -> Non
 
 # ── the library ──────────────────────────────────────────────────────────────────────
 async def run_library() -> None:
-    """``seed-library``: the demo problem set as published problems, and nothing else.
+    """``seed-library``: the demo problem set, published, plus one single-problem assessment each.
 
-    No users, contests, classes, submissions or history. Idempotent: problems are matched by
-    slug, so a second run finds them all and does nothing. Signs in as an existing admin
+    The interviews product attaches an assessment, so each problem gets its own (60 minutes,
+    100 points, no window). Only problems and assessments are written: no users, contests,
+    classes, submissions or history. Idempotent: problems are matched by slug, assessments by
+    title, so a second run finds everything and does nothing. Signs in as an existing admin
     (``create-admin``): ``CODEJUDGE_ADMIN_EMAIL`` and ``CODEJUDGE_ADMIN_PASSWORD``.
     """
     email, password = (
@@ -219,9 +221,21 @@ async def run_library() -> None:
     if todo:
         log(f"{created} problems created; the judge is checking their reference solutions")
         await publish_all(admin, todo)
-        log(f"library ready: {len(todo)} problems published")
-    else:
-        log("library already seeded: nothing to do")
+        log(f"{len(todo)} problems published")
+    titles = {a["title"] for a in await admin.call("GET", "/api/v1/assessments")}
+    made = 0
+    for p in PROBLEMS:
+        if p.title not in titles:
+            await admin.call(
+                "POST", "/api/v1/assessments",
+                {"title": p.title, "duration_minutes": 60, "problems": [{"problem": p.slug, "points": 100}]},
+            )  # fmt: skip
+            made += 1
+    log(
+        f"library ready: {made} assessments created"
+        if todo or made
+        else "library already seeded: nothing to do"
+    )
 
 
 # ── the run ──────────────────────────────────────────────────────────────────────────

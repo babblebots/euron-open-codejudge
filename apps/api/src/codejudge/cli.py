@@ -151,7 +151,7 @@ def main(argv: list[str] | None = None) -> None:
         "seed-demo", help="demo users, problems, contests, classes and history"
     ).set_defaults(fn=_seed)
     sub.add_parser(
-        "seed-library", help="the demo problems as published problems, nothing else"
+        "seed-library", help="the demo problems as published problems with one assessment each"
     ).set_defaults(fn=_seed_library)
     sub.add_parser("openapi", help="print the OpenAPI document as YAML").set_defaults(fn=_openapi)
     args = parser.parse_args(argv)
