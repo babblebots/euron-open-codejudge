@@ -188,6 +188,42 @@ async def publish_all(admin: Client, problems: dict[str, dict[str, Any]]) -> Non
             await asyncio.sleep(2)
 
 
+# ── the library ──────────────────────────────────────────────────────────────────────
+async def run_library() -> None:
+    """``seed-library``: the demo problem set as published problems, and nothing else.
+
+    No users, contests, classes, submissions or history. Idempotent: problems are matched by
+    slug, so a second run finds them all and does nothing. Signs in as an existing admin
+    (``create-admin``): ``CODEJUDGE_ADMIN_EMAIL`` and ``CODEJUDGE_ADMIN_PASSWORD``.
+    """
+    email, password = (
+        os.environ.get("CODEJUDGE_ADMIN_EMAIL", ""),
+        os.environ.get("CODEJUDGE_ADMIN_PASSWORD", ""),
+    )
+    if not email or not password:
+        raise SystemExit(
+            "Set CODEJUDGE_ADMIN_EMAIL and CODEJUDGE_ADMIN_PASSWORD (an existing admin)"
+        )
+    await wait_api()
+    admin = await sign_in(email, password, "admin")
+    todo: dict[str, dict[str, Any]] = {}  # problems still to publish, by slug
+    created = 0
+    for p in PROBLEMS:
+        hits = (await admin.call("GET", f"/api/v1/problems?q={p.slug}"))["items"]
+        found = next((h for h in hits if h["slug"] == p.slug), None)
+        if found is None:
+            found = await create_problem(admin, p)
+            created += 1
+        if found["status"] != "published":
+            todo[p.slug] = found
+    if todo:
+        log(f"{created} problems created; the judge is checking their reference solutions")
+        await publish_all(admin, todo)
+        log(f"library ready: {len(todo)} problems published")
+    else:
+        log("library already seeded: nothing to do")
+
+
 # ── the run ──────────────────────────────────────────────────────────────────────────
 async def run() -> None:
     password = os.environ.get("CJ_DEMO_PASSWORD", "")

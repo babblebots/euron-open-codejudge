@@ -107,6 +107,12 @@ def _seed(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _seed_library(_: argparse.Namespace) -> None:
+    from codejudge.demo.seed import run_library
+
+    asyncio.run(run_library())
+
+
 def _openapi(_: argparse.Namespace) -> None:
     from codejudge.openapi import spec, to_yaml
 
@@ -144,6 +150,9 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser(
         "seed-demo", help="demo users, problems, contests, classes and history"
     ).set_defaults(fn=_seed)
+    sub.add_parser(
+        "seed-library", help="the demo problems as published problems, nothing else"
+    ).set_defaults(fn=_seed_library)
     sub.add_parser("openapi", help="print the OpenAPI document as YAML").set_defaults(fn=_openapi)
     args = parser.parse_args(argv)
     args.fn(args)
