@@ -1,0 +1,7 @@
+{$EURON_HOSTNAME} {
+	encode gzip
+	# The judge and metrics endpoints are for the Compose network only.
+	@private path /internal/* /metrics
+	respond @private 404
+	reverse_proxy api:8080
+}
